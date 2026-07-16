@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16
+    container_name: zylo-postgres
+    environment:
+      POSTGRES_USER: zylo_user
+      POSTGRES_PASSWORD: zylo_pass_2026
+      POSTGRES_DB: zylo_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
