@@ -1,16 +1,68 @@
-version: '3.8'
 services:
-  db:
-    image: postgres:16
-    container_name: zylo-postgres
+  # ---- PostgreSQL Database ----
+  postgres-db:
+    image: postgres:16.14-alpine
+    container_name: zylo-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: zylo_user
-      POSTGRES_PASSWORD: zylo_pass_2026
+      POSTGRES_PASSWORD: zylo_pass
       POSTGRES_DB: zylo_db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zylo_user -d zylo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Security: read-only root filesystem where possible
+    tmpfs:
+      - /tmp
+      - /run
+
+  # ---- Backend API ----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: zylo-backend
+    restart: unless-stopped
+    environment:
+      PORT: "5000"
+      DB_USER: zylo_user
+      DB_PASSWORD: zylo_pass
+      DB_HOST: postgres-db
+      DB_PORT: "5432"
+      DB_NAME: zylo_db
+    expose:
+      - "5000"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    # Security: do not run as root (already in Dockerfile, but enforced here too)
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  # ---- Frontend (Nginx + React) ----
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: zylo-frontend
+    restart: unless-stopped
+    ports:
+      - "80:8080"
+    depends_on:
+      - backend
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
-  postgres_data:
+  pgdata:
+    driver: local

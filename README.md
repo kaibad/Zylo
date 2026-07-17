@@ -23,8 +23,13 @@ ZYLO is a sleek, professional blog platform designed for industry insights and t
 
 For detailed instructions on running the project locally, please see the [Local Development Guide](docs/local-development.md).
 
+## Containerization Development
+
+For detailed Documentaion oncontainerizarion of project, please see the [Containerization Docs](docs/containerization.md).
+
 ## Documentation
 
-| Document                                                | Description                                                 |
-| ------------------------------------------------------- | ----------------------------------------------------------- |
-| [Setup & Architecture Guide](docs/local-development.md) | Local setup, API reference, and authentication architecture |
+| Document                                               | Description                                                                                                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Setup & Architecture Docs](docs/local-development.md) | Local setup, API reference, and authentication architecture                                                                                         |
+| [Containerization Docs](docs/containerization.md)      | Docker-based setup, container architecture, Docker Compose configuration, image building, networking, volumes, and containerized local development. |
