@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+const { Pool } = require("pg");
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -28,7 +28,6 @@ async function initDB() {
         title VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
         author VARCHAR(100) NOT NULL DEFAULT 'Anonymous',
-        emoji VARCHAR(10) DEFAULT '✨',
         user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         is_private BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -37,8 +36,12 @@ async function initDB() {
     `);
 
     // Migrate existing posts table (add columns if they don't exist)
-    await client.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;`);
-    await client.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT false;`);
+    await client.query(
+      `ALTER TABLE posts ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;`,
+    );
+    await client.query(
+      `ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT false;`,
+    );
 
     // Comments table
     await client.query(`
@@ -52,12 +55,20 @@ async function initDB() {
     `);
 
     // Migrate existing columns to timestamptz to fix local timezone offset parsing bugs
-    await client.query(`ALTER TABLE users ALTER COLUMN created_at TYPE TIMESTAMPTZ;`);
-    await client.query(`ALTER TABLE posts ALTER COLUMN created_at TYPE TIMESTAMPTZ;`);
-    await client.query(`ALTER TABLE posts ALTER COLUMN updated_at TYPE TIMESTAMPTZ;`);
-    await client.query(`ALTER TABLE comments ALTER COLUMN created_at TYPE TIMESTAMPTZ;`);
+    await client.query(
+      `ALTER TABLE users ALTER COLUMN created_at TYPE TIMESTAMPTZ;`,
+    );
+    await client.query(
+      `ALTER TABLE posts ALTER COLUMN created_at TYPE TIMESTAMPTZ;`,
+    );
+    await client.query(
+      `ALTER TABLE posts ALTER COLUMN updated_at TYPE TIMESTAMPTZ;`,
+    );
+    await client.query(
+      `ALTER TABLE comments ALTER COLUMN created_at TYPE TIMESTAMPTZ;`,
+    );
 
-    console.log('Database tables initialized');
+    console.log("Database tables initialized");
   } finally {
     client.release();
   }
