@@ -1,0 +1,216 @@
+# ==============================================================
+# Jerney - DevSecOps CI/CD Pipeline
+# ==============================================================
+
+name: Jerney DevSecOps Pipeline
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+# Avoid duplicate/overlapping runs for the same ref
+concurrency:
+  group: jerney-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Security: restrict default permissions to read-only
+permissions:
+  contents: read
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/jerney-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/jerney-frontend
+
+jobs:
+  # STAGE 1: Linting
+  lint:
+    name: "Lint Code"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "${{ matrix.component }}/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.component }}
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ${{ matrix.component }}
+        run: npm run lint
+
+  # STAGE 2: Software Composition Analysis (SCA) — Dependency Audit
+  sca:
+    name: "Dependency Audit"
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "${{ matrix.component }}/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.component }}
+        run: npm ci
+
+      - name: npm audit
+        working-directory: ${{ matrix.component }}
+        run: npm audit --audit-level=high
+
+  # STAGE 3: Dockerfile Lint (Hadolint)
+  dockerfile-lint:
+    name: "Dockerfile Lint"
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ${{ matrix.component }}/Dockerfile
+          failure-threshold: warning
+
+  # STAGE 5: Build & Push Container Images
+  build:
+    name: "Build ${{ matrix.component }}"
+    runs-on: ubuntu-latest
+    needs: [sca, dockerfile-lint, iac-scan]
+    permissions:
+      contents: read
+      packages: write # Needed to push to GHCR
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    outputs:
+      backend-digest: ${{ steps.digest-export.outputs.backend }}
+      frontend-digest: ${{ steps.digest-export.outputs.frontend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.component }}
+          file: ./${{ matrix.component }}/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Export digest
+        id: digest-export
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "${{ matrix.component }}=${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  # STAGE 6: Cosign Keyless Image Signing
+  sign:
+    name: "Sign ${{ matrix.component }} Image"
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # Required for keyless signing (OIDC)
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign image by digest
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+          IMAGE: ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}
+          DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
+        run: |
+          cosign sign --yes "${IMAGE}@${DIGEST}"
+
+  # STAGE 7: Container Image Scanning (Trivy)
+  image-scan:
+    name: "Scan ${{ matrix.component }} Image"
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        env:
+          DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
+        with:
+          image-ref: "ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}@${{ env.DIGEST }}"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+          timeout: "10m"
