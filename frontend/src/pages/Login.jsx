@@ -1,29 +1,29 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { FiLogIn, FiUser, FiLock } from 'react-icons/fi';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { FiLogIn, FiUser, FiLock } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !password) {
-      toast.error('Please enter your username and password');
+      toast.error("Please enter your username and password");
       return;
     }
     setLoading(true);
     try {
       await login(username, password);
       toast.success(`Welcome back, ${username}`);
-      navigate('/');
+      navigate("/");
     } catch (err) {
-      const msg = err?.response?.data?.error || 'Login failed';
+      const msg = err?.response?.data?.error || "Login failed";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -42,7 +42,10 @@ function Login() {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label htmlFor="username">
-              <FiUser size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+              <FiUser
+                size={14}
+                style={{ marginRight: "6px", verticalAlign: "middle" }}
+              />
               Username
             </label>
             <input
@@ -57,7 +60,10 @@ function Login() {
 
           <div className="form-group">
             <label htmlFor="password">
-              <FiLock size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+              <FiLock
+                size={14}
+                style={{ marginRight: "6px", verticalAlign: "middle" }}
+              />
               Password
             </label>
             <input
@@ -70,14 +76,17 @@ function Login() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button
+            type="submit"
+            className="btn btn-primary auth-submit"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
         <p className="auth-link">
-          Don't have an account?{' '}
-          <Link to="/register">Create one</Link>
+          Don&apos;t have an account? <Link to="/register">Create one</Link>
         </p>
       </div>
     </div>
