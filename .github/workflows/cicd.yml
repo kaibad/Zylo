@@ -1,16 +1,16 @@
-# ==============================================================
-# Jerney - DevSecOps CI/CD Pipeline
-# ==============================================================
+# Zylo - DevSecOps CI/CD Pipeline
 
-name: Jerney DevSecOps Pipeline
+name: Zylo DevSecOps Pipeline
 
 on:
   push:
     tags: ["v*.*.*"]
+  pull_request:
+    branches: ["main", "feature"]
 
 # Avoid duplicate/overlapping runs for the same ref
 concurrency:
-  group: jerney-${{ github.workflow }}-${{ github.ref }}
+  group: zylo-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # Security: restrict default permissions to read-only
@@ -19,8 +19,8 @@ permissions:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/jerney-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/jerney-frontend
+  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/zylo-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/zylo-frontend
 
 jobs:
   # STAGE 1: Linting
@@ -94,6 +94,32 @@ jobs:
           dockerfile: ${{ matrix.component }}/Dockerfile
           failure-threshold: warning
 
+  # STAGE 4: IaC Security Scan (Checkov) — Terraform + K8s
+  iac-scan:
+    name: "IaC Security Scan"
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov on Terraform
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform/
+          framework: terraform
+          soft_fail: false
+          skip_check: CKV_AWS_39,CKV_AWS_58
+          output_format: cli
+
+      - name: Run Checkov on Kubernetes manifests
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: k8s/
+          framework: kubernetes
+          soft_fail: true
+          output_format: cli
+
   # STAGE 5: Build & Push Container Images
   build:
     name: "Build ${{ matrix.component }}"
@@ -101,7 +127,7 @@ jobs:
     needs: [sca, dockerfile-lint, iac-scan]
     permissions:
       contents: read
-      packages: write # Needed to push to GHCR
+      packages: write
     strategy:
       matrix:
         component: [backend, frontend]
@@ -126,7 +152,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}
+          images: ghcr.io/${{ github.repository }}/zylo-${{ matrix.component }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -162,7 +188,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write # Required for keyless signing (OIDC)
+      id-token: write
     strategy:
       matrix:
         component: [backend, frontend]
@@ -180,7 +206,7 @@ jobs:
       - name: Sign image by digest
         env:
           COSIGN_EXPERIMENTAL: "1"
-          IMAGE: ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}
+          IMAGE: ghcr.io/${{ github.repository }}/zylo-${{ matrix.component }}
           DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
         run: |
           cosign sign --yes "${IMAGE}@${DIGEST}"
@@ -207,7 +233,7 @@ jobs:
         env:
           DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
         with:
-          image-ref: "ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}@${{ env.DIGEST }}"
+          image-ref: "ghcr.io/${{ github.repository }}/zylo-${{ matrix.component }}@${{ env.DIGEST }}"
           format: "table"
           exit-code: "1"
           ignore-unfixed: true
