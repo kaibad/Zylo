@@ -1,5 +1,5 @@
 # ---- Build stage ----
-FROM node:20-alpine AS build
+FROM node:22.23-alpine3.24 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
