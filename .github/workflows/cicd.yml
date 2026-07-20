@@ -199,6 +199,7 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: true
           sbom: true
+          no-cache: true
 
       - name: Export digest
         id: digest-export
