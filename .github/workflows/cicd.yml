@@ -68,11 +68,40 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
 
+  # STAGE 1.8: IaC Security Scan (Checkov) Terraform + K8s
+  # Blocking for Terraform; soft fail for K8s manifests
+  iac-scan:
+    name: "IaC Security Scan"
+    runs-on: ubuntu-latest
+    needs: [lint, secret-scan]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov on Terraform
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform/
+          framework: terraform
+          soft_fail: false
+          skip_check: CKV_AWS_39,CKV_AWS_58
+          output_format: cli
+
+      - name: Run Checkov on Kubernetes manifests
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: k8s/
+          framework: kubernetes
+          soft_fail: true
+          output_format: cli
+
   # STAGE 2: Software Composition Analysis (SCA) — Dependency Audit
   sca:
     name: "Dependency Audit"
     runs-on: ubuntu-latest
-    needs: [lint, secret-scan]
+    needs: [lint, secret-scan, iac-scan]
     strategy:
       matrix:
         component: [backend, frontend]
@@ -107,7 +136,7 @@ jobs:
   dockerfile-lint:
     name: "Dockerfile Lint"
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, secret-scan, iac-scan]
     strategy:
       matrix:
         component: [backend, frontend]
