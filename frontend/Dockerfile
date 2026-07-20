@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # ---- Production stage ----
-FROM nginx:1.27-alpine3.24 AS production
+FROM nginx:1.31.3-alpine AS production
 
 # Security: update Alpine packages
 RUN apk upgrade --no-cache
