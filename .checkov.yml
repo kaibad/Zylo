@@ -1,0 +1,14 @@
+framework:
+  - terraform
+
+directory:
+  - terraform
+
+compact: true
+
+soft-fail: false
+
+skip-check:
+  - CKV_AWS_39 # Public access to EKS endpoint (dev kubectl access)
+  - CKV_AWS_58 # EKS public endpoint (intentional for dev)
+  - CKV_TF_1 # Terraform Registry modules use version constraints

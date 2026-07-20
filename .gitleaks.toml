@@ -1,0 +1,9 @@
+title = "Zylo Gitleaks Config"
+
+[allowlist]
+description = "Allow known safe files"
+paths = [
+  "node_modules/",
+  "dist/",
+  "build/"
+]
