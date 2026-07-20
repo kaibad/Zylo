@@ -7,7 +7,10 @@ COPY . .
 RUN npm run build
 
 # ---- Production stage ----
-FROM nginx:1.27-alpine AS production
+FROM nginx:1.27-alpine3.24 AS production
+
+# Security: update Alpine packages
+RUN apk upgrade --no-cache
 
 # Security: remove default nginx config
 RUN rm -rf /etc/nginx/conf.d/default.conf /usr/share/nginx/html/*
