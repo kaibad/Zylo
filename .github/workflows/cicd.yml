@@ -134,7 +134,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/zylo-${{ matrix.component }}
+          images: ${{ matrix.component == 'backend' && env.BACKEND_IMAGE || env.FRONTEND_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -188,7 +188,7 @@ jobs:
       - name: Sign image by digest
         env:
           COSIGN_EXPERIMENTAL: "1"
-          IMAGE: ghcr.io/${{ github.repository }}/zylo-${{ matrix.component }}
+          IMAGE: ${{ matrix.component == 'backend' && env.BACKEND_IMAGE || env.FRONTEND_IMAGE }}
           DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
         run: |
           cosign sign --yes "${IMAGE}@${DIGEST}"
@@ -215,7 +215,7 @@ jobs:
         env:
           DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
         with:
-          image-ref: "ghcr.io/${{ github.repository }}/zylo-${{ matrix.component }}@${{ env.DIGEST }}"
+          image-ref: "${{ matrix.component == 'backend' && env.BACKEND_IMAGE || env.FRONTEND_IMAGE }}@${{ env.DIGEST }}"
           format: "table"
           exit-code: "1"
           ignore-unfixed: true
