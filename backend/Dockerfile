@@ -12,7 +12,7 @@ FROM node:22.23-alpine3.24 AS production
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Security: remove unnecessary packages
-RUN apk add --no-cache dumb-init=1.2.5-r3
+RUN apk add --no-cache dumb-init=1.2.5-r4
 
 WORKDIR /app
 
