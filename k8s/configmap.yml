@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: zylo
+data:
+  POSTGRES_DB: zylo_db

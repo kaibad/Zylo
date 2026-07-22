@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: zylo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard # must match the PV's storageClassName exactly
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: zylo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      # Replaces `depends_on: postgres-db: condition: service_healthy` —
+      # blocks pod startup until Postgres is actually accepting connections.
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16.14-alpine
+          envFrom:
+            - secretRef:
+                name: postgres-secret # POSTGRES_USER, POSTGRES_PASSWORD
+            - configMapRef:
+                name: postgres-config # POSTGRES_DB — only the DB tier uses a ConfigMap
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-db -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do
+                echo "waiting for postgres-db..."
+                sleep 2
+              done
+      containers:
+        - name: backend
+          image: kailashbadu/zylo-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: DB_HOST
+              value: "postgres-db" # matches the Service name from db-05-service.yaml
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_DB
+          securityContext:
+            allowPrivilegeEscalation: false # = security_opt: no-new-privileges:true
+            readOnlyRootFilesystem: true # = read_only: true
+            runAsNonRoot: true # matches your Dockerfile's non-root appuser
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zylo-backend
+  namespace: zylo
+spec:
+  type: ClusterIP # internal only — mirrors compose's `expose:` (no host port published)
+  selector:
+    app: backend
+  ports:
+    - port: 5000
+      targetPort: 5000
