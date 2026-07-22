@@ -5,29 +5,29 @@ variable "aws_region" {
 }
 
 variable "environment" {
-    description= "Deployment environment (e.g., dev, staging, prod)"
-    type = string
-    default = "dev"
+  description = "Deployment environment (e.g., dev, staging, prod)"
+  type        = string
+  default     = "dev"
 }
 
 variable "cluster_name" {
-    description = "Name of the eks cluster"
-    type = string
-    default = "zylo-eks"
+  description = "Name of the eks cluster"
+  type        = string
+  default     = "zylo-eks"
 }
 
-variable "cluster_version"{
-    description = "Kubernetes version for the EKS cluster"
-    type = string
-    default = "1.36"
+variable "cluster_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.36"
 }
 
 # vpc
 
 variable "vpc_cidr" {
-    description = "CIDR block for the VPC"
-    type = string
-    default = "10.0.0.0/16"
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.0.0.0/16"
 }
 
 variable "availability_zones" {

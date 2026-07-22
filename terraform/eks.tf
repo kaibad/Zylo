@@ -94,7 +94,7 @@ resource "aws_eks_cluster" "main" {
     subnet_ids              = concat(aws_subnet.private[*].id, aws_subnet.public[*].id)
     security_group_ids      = [aws_security_group.eks_cluster.id]
     endpoint_private_access = true
-    endpoint_public_access  = true   # allows kubectl from your laptop
+    endpoint_public_access  = true # allows kubectl from your laptop
   }
 
   # Useful logs for debugging and audit
@@ -128,7 +128,7 @@ resource "aws_eks_node_group" "main" {
   }
 
   update_config {
-    max_unavailable = 1   # rolling update — always keep at least n-1 nodes up
+    max_unavailable = 1 # rolling update — always keep at least n-1 nodes up
   }
 
   # Ensure IAM policies are attached before nodes try to join the cluster

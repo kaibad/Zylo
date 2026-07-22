@@ -2,8 +2,8 @@
 
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
-  enable_dns_support   = true   # required for EKS
-  enable_dns_hostnames = true   # required for EKS
+  enable_dns_support   = true # required for EKS
+  enable_dns_hostnames = true # required for EKS
 
   tags = {
     Name = "${var.cluster_name}-vpc"
@@ -29,10 +29,10 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true   # instances here get public IPs
+  map_public_ip_on_launch = true # instances here get public IPs
 
   tags = {
-    Name                                        = "${var.cluster_name}-public-${count.index + 1}"
+    Name = "${var.cluster_name}-public-${count.index + 1}"
     # These two tags tell EKS which subnets to use for public load balancers
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "kubernetes.io/role/elb"                    = "1"
@@ -50,7 +50,7 @@ resource "aws_subnet" "private" {
   availability_zone = var.availability_zones[count.index]
 
   tags = {
-    Name                                        = "${var.cluster_name}-private-${count.index + 1}"
+    Name = "${var.cluster_name}-private-${count.index + 1}"
     # Tells EKS to use these subnets for internal load balancers
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "kubernetes.io/role/internal-elb"           = "1"
@@ -79,7 +79,7 @@ resource "aws_nat_gateway" "main" {
   count = length(var.availability_zones)
 
   allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id   # NAT sits in public subnet
+  subnet_id     = aws_subnet.public[count.index].id # NAT sits in public subnet
 
   depends_on = [aws_internet_gateway.main]
 
