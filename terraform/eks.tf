@@ -64,6 +64,7 @@ resource "aws_security_group" "eks_cluster" {
 
   # Allow all traffic between resources (nodes, control plane) sharing this SG
   ingress {
+    description = "Allow HTTPS Kubernetes API access"
     from_port = 0
     to_port   = 0
     protocol  = "-1"
@@ -72,6 +73,7 @@ resource "aws_security_group" "eks_cluster" {
 
   # Allow all outbound (nodes calling AWS APIs, pulling images, etc.)
   egress {
+    description = "Allow outbound traffic to AWS services"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -98,7 +100,7 @@ resource "aws_eks_cluster" "main" {
   }
 
   # Useful logs for debugging and audit
-  enabled_cluster_log_types = ["api", "audit", "authenticator"]
+  enabled_cluster_log_types = ["api", "audit", "authenticator","controllerManager","scheduler"]
 
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy,

@@ -79,13 +79,13 @@ variable "node_max_size" {
 variable "docker_image_backend" {
   description = "Full Docker image reference for the Tetris app"
   type        = string
-  default     = "kailashbadu/zylo-frontend"
+  default     = "kailashbadu/zylo-backend"
 }
 
 variable "docker_image_frontend" {
   description = "Full Docker image reference for the Tetris app"
   type        = string
-  default     = "kailashbadu/zylo-backend"
+  default     = "kailashbadu/zylo-frontend"
 }
 
 variable "app_replicas" {

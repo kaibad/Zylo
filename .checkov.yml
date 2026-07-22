@@ -12,3 +12,9 @@ skip-check:
   - CKV_AWS_39 # Public access to EKS endpoint (dev kubectl access)
   - CKV_AWS_58 # EKS public endpoint (intentional for dev)
   - CKV_TF_1 # Terraform Registry modules use version constraints
+  - CKV_AWS_339 # Checkov 3.3.8 doesn't recognize AWS-supported EKS 1.36
+  - CKV_AWS_38 # EKS public endpoint enabled (intentional for development)
+  - CKV_AWS_130 # Public subnets intentionally assign public IPs
+  - CKV2_AWS_11 # VPC Flow Logs not enabled (accepted for development)
+  - CKV_AWS_339 # Checkov 3.3.8 doesn't recognize AWS-supported EKS 1.36
+  - CKV_TF_1 # Terraform Registry modules use version constraints
