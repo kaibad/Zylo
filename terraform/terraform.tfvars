@@ -1,5 +1,0 @@
-aws_region      = "ap-south-1"
-environment     = "dev"
-cluster_name    = "zylo-eks"
-cluster_version = "1.36"
-vpc_cidr        = "10.0.0.0/16"

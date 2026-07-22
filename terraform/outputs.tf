@@ -1,28 +1,34 @@
 output "cluster_name" {
   description = "EKS cluster name"
-  value       = module.eks.cluster_name
+  value       = aws_eks_cluster.main.name
 }
 
 output "cluster_endpoint" {
-  description = "EKS cluster API endpoint"
-  value       = module.eks.cluster_endpoint
+  description = "EKS cluster API server endpoint"
+  value       = aws_eks_cluster.main.endpoint
 }
 
-output "cluster_certificate_authority" {
-  description = "EKS cluster CA certificate (base64)"
-  value       = module.eks.cluster_certificate_authority_data
-  sensitive   = true
+output "configure_kubectl" {
+  description = "Run this command to configure kubectl after apply"
+  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.main.name}"
 }
 
 output "vpc_id" {
   description = "VPC ID"
-  value       = module.vpc.vpc_id
+  value       = aws_vpc.main.id
 }
 
-output "region" {
-  description = "AWS region"
-  value       = var.aws_region
+output "private_subnet_ids" {
+  description = "Private subnet IDs (worker nodes)"
+  value       = aws_subnet.private[*].id
 }
 
-# Use this command to configure kubectl after apply:
-# aws eks update-kubeconfig --region <region> --name <cluster_name>
+output "public_subnet_ids" {
+  description = "Public subnet IDs (load balancers)"
+  value       = aws_subnet.public[*].id
+}
+
+output "node_group_name" {
+  description = "EKS node group name"
+  value       = aws_eks_node_group.main.node_group_name
+}
