@@ -1,8 +1,8 @@
-# Jerney CI/CD Pipeline
+# Zylo CI/CD Pipeline
 
 ## Overview
 
-This document walks through the Jerney DevSecOps pipeline stage by stage, in the order the jobs actually run. Each section explains what the stage does, why it exists, and how it's implemented in `jerney-pipeline.yml`.
+This document walks through the Zylo DevSecOps pipeline stage by stage, in the order the jobs actually run. Each section explains what the stage does, why it exists, and how it's implemented in `Zylo-pipeline.yml`.
 
 The pipeline is built on GitHub Actions and covers two paths:
 
@@ -12,7 +12,7 @@ The pipeline is built on GitHub Actions and covers two paths:
 Merging to `main` without a tag does not trigger a build. A release only happens when a version tag is pushed, which keeps "what's in `main`" and "what's actually shipped" as two deliberate, separate decisions.
 
 ```
-Lint → SCA → Dockerfile Lint → IaC Scan → Build → Sign → Image Scan → Update Manifest
+Lint → SCA → Dockerfile Lint → IaC Scan → Build → Sign → Image Scan
 ```
 
 ---
@@ -281,7 +281,7 @@ build:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}
+        images: ghcr.io/${{ github.repository }}/Zylo-${{ matrix.component }}
         tags: |
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}
@@ -366,7 +366,7 @@ sign:
     - name: Sign image by digest
       env:
         COSIGN_EXPERIMENTAL: "1"
-        IMAGE: ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}
+        IMAGE: ghcr.io/${{ github.repository }}/Zylo-${{ matrix.component }}
         DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
       run: |
         cosign sign --yes "${IMAGE}@${DIGEST}"
@@ -419,7 +419,7 @@ image-scan:
       env:
         DIGEST: ${{ matrix.component == 'backend' && needs.build.outputs.backend-digest || needs.build.outputs.frontend-digest }}
       with:
-        image-ref: "ghcr.io/${{ github.repository }}/jerney-${{ matrix.component }}@${{ env.DIGEST }}"
+        image-ref: "ghcr.io/${{ github.repository }}/Zylo-${{ matrix.component }}@${{ env.DIGEST }}"
         format: "table"
         exit-code: "1"
         ignore-unfixed: true
@@ -444,7 +444,7 @@ image-scan:
 
 **What it is**
 
-Automatically updating the Kubernetes deployment manifest (`k8s/jerney.yaml`) with the newly built image tags, and committing that change back to `main`.
+Automatically updating the Kubernetes deployment manifest (`k8s/Zylo.yaml`) with the newly built image tags, and committing that change back to `main`.
 
 **Why it matters**
 
@@ -489,16 +489,16 @@ update-manifest:
         yq -i '
           (.spec.template.spec.containers[] | select(.name == "backend") | .image) = "'"${BACKEND_IMAGE}"':'"${IMAGE_TAG}"'" |
           (.spec.template.spec.containers[] | select(.name == "frontend") | .image) = "'"${FRONTEND_IMAGE}"':'"${IMAGE_TAG}"'"
-        ' k8s/jerney.yaml
+        ' k8s/Zylo.yaml
 
         echo "Updated images to tag: ${IMAGE_TAG}"
-        grep -n "image:" k8s/jerney.yaml
+        grep -n "image:" k8s/Zylo.yaml
 
     - name: Commit and push manifest update
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add k8s/jerney.yaml
+        git add k8s/Zylo.yaml
         git diff --cached --quiet && exit 0
 
         for i in 1 2 3; do

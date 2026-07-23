@@ -41,3 +41,7 @@ terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/.terraform.lock.hcl
 terraform/crash.log
+
+monitoring_secret.md
+helm.md
+
