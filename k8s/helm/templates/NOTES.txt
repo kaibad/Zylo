@@ -1,0 +1,17 @@
+1. Get the application URL by running these commands:
+{{- if eq .Values.frontend.service.type "NodePort" }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Values.namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services frontend)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Values.namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Values.namespace }} -l "app=frontend" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward $POD_NAME 8080:8080
+{{- end }}
+
+2. Check pod status:
+  kubectl get pods --namespace {{ .Values.namespace }}
+
+3. View logs:
+  kubectl logs -f --namespace {{ .Values.namespace }} -l app=postgres-db
+  kubectl logs -f --namespace {{ .Values.namespace }} -l app=backend
+  kubectl logs -f --namespace {{ .Values.namespace }} -l app=frontend

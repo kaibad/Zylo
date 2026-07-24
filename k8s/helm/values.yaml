@@ -1,0 +1,58 @@
+# ============================================
+# Global Settings
+# ============================================
+namespace: zylo
+
+# ============================================
+# PostgreSQL Database
+# ============================================
+database:
+  image: postgres
+  tag: "16.14-alpine"
+  user: zylo_user
+  password: "zylo_pass"          # CHANGE THIS IN PRODUCTION!
+  dbName: zylo_db
+  storage:
+    size: 1Gi
+    class: standard
+    hostPath: /data/postgres
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ============================================
+# Backend Application
+# ============================================
+backend:
+  image: kailashbadu/zylo-backend
+  tag: latest
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# ============================================
+# Frontend Application
+# ============================================
+frontend:
+  image: kailashbadu/zylo-frontend
+  tag: latest
+  replicas: 2
+  service:
+    type: NodePort      # Use NodePort for EC2 direct access
+    nodePort: 30080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 300m
+      memory: 128Mi
