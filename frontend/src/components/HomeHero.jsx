@@ -5,7 +5,7 @@ function HomeHero() {
     <div className="home-header">
       <h1>Welcome to ZYLO</h1>
       <p>
-        A very professional platform for publishing your insights, thoughts, and
+        A professional platform for publishing your insights, thoughts, and
         technical articles.
       </p>
       <div className="vibe-tags">

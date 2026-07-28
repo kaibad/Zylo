@@ -20,6 +20,7 @@
     "sigstore": "^4.1.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "10.0.1",
     "eslint": "^10.8.0",
     "nodemon": "^3.1.4"
