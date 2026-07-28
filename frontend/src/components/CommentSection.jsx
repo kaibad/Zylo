@@ -28,6 +28,7 @@ function CommentSection({ postId, comments, onUpdate }) {
       toast.success('Comment posted successfully');
       onUpdate();
     } catch (err) {
+      console.error(err);
       toast.error('Failed to post comment');
     } finally {
       setSubmitting(false);
@@ -40,6 +41,7 @@ function CommentSection({ postId, comments, onUpdate }) {
       toast.success('Comment deleted');
       onUpdate();
     } catch (err) {
+      console.error(err);
       toast.error('Failed to delete comment');
     }
   };

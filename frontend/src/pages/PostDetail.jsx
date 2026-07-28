@@ -44,6 +44,7 @@ function PostDetail() {
       toast.success("Post deleted successfully");
       navigate("/");
     } catch (err) {
+      console.error(err);
       toast.error("Failed to delete post");
     }
   };

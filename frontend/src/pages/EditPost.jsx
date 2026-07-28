@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPost, updatePost } from '../api';
 import { HiArrowLeft } from 'react-icons/hi2';
@@ -16,11 +16,7 @@ function EditPost() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchPost();
-  }, [id]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       const res = await getPost(id);
       const post = res.data;
@@ -36,12 +32,17 @@ function EditPost() {
       setContent(post.content);
       setIsPrivate(post.is_private);
     } catch (err) {
+      console.error(err);
       toast.error('Post not found');
       navigate('/');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user, navigate]);
+
+  useEffect(() => {
+    fetchPost();
+  }, [fetchPost]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,6 +61,7 @@ function EditPost() {
       toast.success('Post updated successfully');
       navigate(`/post/${id}`);
     } catch (err) {
+      console.error(err);
       toast.error('Failed to update post');
     } finally {
       setSubmitting(false);

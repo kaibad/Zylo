@@ -43,6 +43,7 @@ function CreatePost() {
       toast.success('Post created successfully');
       navigate(`/post/${res.data.id}`);
     } catch (err) {
+      console.error(err);
       toast.error('Failed to create post');
     } finally {
       setSubmitting(false);
