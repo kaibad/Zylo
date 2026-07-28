@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import useSafeNavigate from '../hooks/useSafeNavigate';
 import { getPost, updatePost } from '../api';
 import { HiArrowLeft } from 'react-icons/hi2';
 import { FiGlobe, FiLock } from 'react-icons/fi';
@@ -8,7 +9,8 @@ import toast from 'react-hot-toast';
 
 function EditPost() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  // Use safe navigate to sanitize destinations (mitigates react-router open-redirect issues)
+  const navigate = useSafeNavigate();
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');

@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import useSafeNavigate from '../hooks/useSafeNavigate';
 import { useAuth } from '../context/AuthContext';
 import { FiUserPlus, FiUser, FiLock } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 function Register() {
   const { register } = useAuth();
-  const navigate = useNavigate();
+  // Use safe navigate to sanitize destinations (mitigates react-router open-redirect issues)
+  const navigate = useSafeNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

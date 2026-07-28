@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import useSafeNavigate from '../hooks/useSafeNavigate';
 import { createPost } from '../api';
 import { HiArrowLeft } from 'react-icons/hi2';
 import { FiGlobe, FiLock } from 'react-icons/fi';
@@ -7,7 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 function CreatePost() {
-  const navigate = useNavigate();
+  // Use safe navigate to sanitize destinations (mitigates react-router open-redirect issues)
+  const navigate = useSafeNavigate();
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');

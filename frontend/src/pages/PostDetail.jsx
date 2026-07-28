@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import useSafeNavigate from '../hooks/useSafeNavigate';
 import { getPost, deletePost } from "../api";
 import { formatDistanceToNow } from "date-fns";
 import { HiArrowLeft, HiPencil, HiTrash } from "react-icons/hi2";
@@ -11,7 +12,8 @@ import toast from "react-hot-toast";
 
 function PostDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  // Use safe navigate to sanitize destinations (mitigates react-router open-redirect issues)
+  const navigate = useSafeNavigate();
   const { user } = useAuth();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
